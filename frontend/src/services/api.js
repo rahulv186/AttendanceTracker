@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api`,
-  timeout: 10000,
+  baseURL: `http://localhost:5001/api`,
+  timeout: 100000,
 });
 
 // Interceptor for consistent error handling
