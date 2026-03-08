@@ -20,7 +20,8 @@ const {
  */
 const getAttendance = async (req, res) => {
   try {
-    const subjects = await Subject.find({});
+    const userId = req.user.id;
+    const subjects = await Subject.find({ user: userId });
 
     const data = subjects.map((sub) => {
       const pct = getPercentage(sub.totalAttended, sub.totalConducted);
@@ -47,7 +48,7 @@ const getAttendance = async (req, res) => {
     const overallPercentage = getPercentage(totalAttended, totalConducted);
 
     // Recent logs (last 20)
-    const recentLogs = await AttendanceLog.find({})
+    const recentLogs = await AttendanceLog.find({ user: userId })
       .populate("subject", "name code color")
       .sort({ date: -1, period: -1 })
       .limit(20);
@@ -90,7 +91,8 @@ const updateAttendance = async (req, res) => {
         .json({ success: false, message: "Status must be present or absent" });
     }
 
-    const subject = await Subject.findById(subjectId);
+    const userId = req.user.id;
+    const subject = await Subject.findOne({ _id: subjectId, user: userId });
     if (!subject) {
       return res
         .status(404)
@@ -99,6 +101,7 @@ const updateAttendance = async (req, res) => {
 
     // Check for duplicate log for same date+period+subject
     const existing = await AttendanceLog.findOne({
+      user: userId,
       subject: subjectId,
       date: new Date(date),
       period,
@@ -117,6 +120,7 @@ const updateAttendance = async (req, res) => {
     } else {
       // New log
       await AttendanceLog.create({
+        user: userId,
         subject: subjectId,
         date: new Date(date),
         period,
@@ -154,8 +158,9 @@ const updateAttendance = async (req, res) => {
  */
 const predictAttendance = async (req, res) => {
   try {
-    const subjects = await Subject.find({});
-    const timetable = await TimetableEntry.find({}).populate("subject");
+    const userId = req.user.id;
+    const subjects = await Subject.find({ user: userId });
+    const timetable = await TimetableEntry.find({ user: userId }).populate("subject");
 
     if (timetable.length === 0) {
       return res.status(400).json({
@@ -211,7 +216,8 @@ const predictAttendance = async (req, res) => {
  */
 const getProjection = async (req, res) => {
   try {
-    const subjects = await Subject.find({});
+    const userId = req.user.id;
+    const subjects = await Subject.find({ user: userId });
 
     const projections = subjects.map((sub) => {
       const currentPct = getPercentage(sub.totalAttended, sub.totalConducted);
@@ -267,10 +273,10 @@ const getProjection = async (req, res) => {
 const getTimetableForDay = async (req, res) => {
   try {
     const { day, period, date } = req.query;
-
-    console.log("Incoming:", day, period);
+    const userId = req.user.id;
 
     const entry = await TimetableEntry.findOne({
+      user: userId,
       day,
       period: Number(period),
     }).populate("subject");
@@ -284,6 +290,7 @@ const getTimetableForDay = async (req, res) => {
     }
 
     const existingLog = await AttendanceLog.findOne({
+      user: userId,
       subject: entry.subject._id,
       date: new Date(date),
       period: Number(period),
@@ -303,6 +310,7 @@ const getTimetableForDay = async (req, res) => {
 const getDayTimetableAndLogs = async (req, res) => {
   try {
     const { date } = req.query; // Expecting date string like 'YYYY-MM-DD'
+    const userId = req.user.id;
 
     if (!date) {
       return res
@@ -323,18 +331,18 @@ const getDayTimetableAndLogs = async (req, res) => {
     const dayOfWeek = dayNames[targetDate.getDay()];
 
     // Fetch timetable for the day
-    const timetable = await TimetableEntry.find({ day: dayOfWeek })
+    const timetable = await TimetableEntry.find({ user: userId, day: dayOfWeek })
       .populate("subject")
       .sort({ period: 1 });
 
     // Fetch existing logs for the specific date
-    // Create start and end of day to query logs
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
 
     const logs = await AttendanceLog.find({
+      user: userId,
       date: { $gte: startOfDay, $lte: endOfDay },
     });
 
@@ -480,9 +488,10 @@ const TIMETABLE_TEMPLATE = [
 
 const resetDb = async (req, res) => {
   try {
-    const sResult = await Subject.deleteMany({});
-    const tResult = await TimetableEntry.deleteMany({});
-    const aResult = await AttendanceLog.deleteMany({});
+    const userId = req.user.id;
+    const sResult = await Subject.deleteMany({ user: userId });
+    const tResult = await TimetableEntry.deleteMany({ user: userId });
+    const aResult = await AttendanceLog.deleteMany({ user: userId });
     res.json({
       success: true,
       message: `Cleared DB: ${sResult.deletedCount} subjects, ${tResult.deletedCount} timetable entries, ${aResult.deletedCount} logs.`,
@@ -494,7 +503,8 @@ const resetDb = async (req, res) => {
 
 const seedSubjects = async (req, res) => {
   try {
-    const count = await Subject.countDocuments();
+    const userId = req.user.id;
+    const count = await Subject.countDocuments({ user: userId });
     const overwrite = req.body && req.body.overwrite;
     if (count > 0 && !overwrite) {
       return res
@@ -506,11 +516,12 @@ const seedSubjects = async (req, res) => {
         });
     }
     if (overwrite) {
-      await Subject.deleteMany({});
-      await TimetableEntry.deleteMany({});
-      await AttendanceLog.deleteMany({});
+      await Subject.deleteMany({ user: userId });
+      await TimetableEntry.deleteMany({ user: userId });
+      await AttendanceLog.deleteMany({ user: userId });
     }
-    const inserted = await Subject.insertMany(SUBJECTS);
+    const subjectsWithUser = SUBJECTS.map((s) => ({ ...s, user: userId }));
+    const inserted = await Subject.insertMany(subjectsWithUser);
     res.json({
       success: true,
       message: `Inserted ${inserted.length} subjects.`,
@@ -522,8 +533,8 @@ const seedSubjects = async (req, res) => {
 
 const seedTimetable = async (req, res) => {
   try {
-    // Need subjects first
-    const subjects = await Subject.find({});
+    const userId = req.user.id;
+    const subjects = await Subject.find({ user: userId });
     if (subjects.length === 0) {
       return res.status(400).json({
         success: false,
@@ -536,12 +547,12 @@ const seedTimetable = async (req, res) => {
       codeToId[sub.code] = sub._id;
     }
 
-    await TimetableEntry.deleteMany({});
+    await TimetableEntry.deleteMany({ user: userId });
 
     const entries = TIMETABLE_TEMPLATE.map((t) => {
       if (!codeToId[t.code])
-        throw new Error(`Model not found for code ${t.code}`);
-      return { day: t.day, period: t.period, subject: codeToId[t.code] };
+        throw new Error(`Subject not found for code ${t.code}`);
+      return { user: userId, day: t.day, period: t.period, subject: codeToId[t.code] };
     });
 
     const inserted = await TimetableEntry.insertMany(entries);

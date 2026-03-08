@@ -2,7 +2,8 @@ const TimetableEntry = require("../models/Timetable");
 
 const getTimetables = async (req, res) => {
   try {
-    const entries = await TimetableEntry.find({})
+    const userId = req.user.id;
+    const entries = await TimetableEntry.find({ user: userId })
       .populate("subject", "name code color")
       .sort({ day: 1, period: 1 });
     res.json({ success: true, timetables: entries });
@@ -14,6 +15,7 @@ const getTimetables = async (req, res) => {
 const bulkSaveTimetable = async (req, res) => {
   try {
     const { timetables } = req.body; // Array of { day, period, subject }
+    const userId = req.user.id;
 
     if (!Array.isArray(timetables)) {
       return res
@@ -24,11 +26,11 @@ const bulkSaveTimetable = async (req, res) => {
         });
     }
 
-    // Completely wipe old timetable to avoid orphan overlaps since user is sending full state
-    await TimetableEntry.deleteMany({});
+    await TimetableEntry.deleteMany({ user: userId });
 
     if (timetables.length > 0) {
-      await TimetableEntry.insertMany(timetables);
+      const withUser = timetables.map((t) => ({ ...t, user: userId }));
+      await TimetableEntry.insertMany(withUser);
     }
 
     res.json({ success: true, message: "Timetable updated successfully" });

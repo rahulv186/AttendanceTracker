@@ -5,12 +5,35 @@ const API = axios.create({
   timeout: 100000,
 });
 
-// Interceptor for consistent error handling
+// Attach JWT to every request if present
+const setAuthHeader = () => {
+  const token = localStorage.getItem("token");
+  API.defaults.headers.common["Authorization"] = token ? `Bearer ${token}` : "";
+};
+setAuthHeader();
+
+// Re-apply token when localStorage may have changed (e.g. after login)
+export const setToken = (token) => {
+  if (token) localStorage.setItem("token", token);
+  else localStorage.removeItem("token");
+  setAuthHeader();
+};
+
+// Interceptor for consistent error handling and 401 redirect
 API.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    const status = error?.response?.status;
     const message =
       error?.response?.data?.message || error.message || "Network Error";
+    if (status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setAuthHeader();
+      if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+        window.location.href = "/login";
+      }
+    }
     return Promise.reject(new Error(message));
   },
 );

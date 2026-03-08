@@ -1,15 +1,20 @@
 /**
- * seed.js – Populates the database with sample subjects and timetable.
+ * seed.js – Populates the database with a demo user and sample subjects/timetable.
  * Run: node seed.js
+ * Multi-user: all seeded data is assigned to the demo user (demo@example.com).
  */
 
 require("dotenv").config();
 const colors = require("colors");
 const mongoose = require("mongoose");
+const User = require("./models/User");
 const Subject = require("./models/Subject");
 const TimetableEntry = require("./models/Timetable");
 const AttendanceLog = require("./models/AttendanceLog");
 const connectDB = require("./config/db");
+
+const DEMO_EMAIL = "demo@example.com";
+const DEMO_PASSWORD = "demo123";
 
 const SUBJECTS = [
   {
@@ -135,24 +140,37 @@ const TIMETABLE_TEMPLATE = [
 const seed = async () => {
   await connectDB();
 
-  // Clear existing data
-  await Subject.deleteMany({});
-  await TimetableEntry.deleteMany({});
-  await AttendanceLog.deleteMany({});
-  console.log("Cleared existing data".yellow);
+  let user = await User.findOne({ email: DEMO_EMAIL });
+  if (!user) {
+    user = await User.create({
+      name: "Demo User",
+      email: DEMO_EMAIL,
+      password: DEMO_PASSWORD,
+    });
+    console.log(`Created demo user: ${DEMO_EMAIL}`.green);
+  } else {
+    console.log(`Using existing demo user: ${DEMO_EMAIL}`.yellow);
+  }
+  const userId = user._id;
 
-  // Insert subjects
-  const insertedSubjects = await Subject.insertMany(SUBJECTS);
+  // Clear existing data for this user
+  await Subject.deleteMany({ user: userId });
+  await TimetableEntry.deleteMany({ user: userId });
+  await AttendanceLog.deleteMany({ user: userId });
+  console.log("Cleared existing data for demo user".yellow);
+
+  // Insert subjects with user
+  const subjectsWithUser = SUBJECTS.map((s) => ({ ...s, user: userId }));
+  const insertedSubjects = await Subject.insertMany(subjectsWithUser);
   console.log(`Inserted ${insertedSubjects.length} subjects`.green);
 
-  // Build code -> _id map
   const codeToId = {};
   for (const sub of insertedSubjects) {
     codeToId[sub.code] = sub._id;
   }
 
-  // Insert timetable entries
   const timetableEntries = TIMETABLE_TEMPLATE.map((entry) => ({
+    user: userId,
     day: entry.day,
     period: entry.period,
     subject: codeToId[entry.code],
@@ -160,7 +178,7 @@ const seed = async () => {
   await TimetableEntry.insertMany(timetableEntries);
   console.log(`Inserted ${timetableEntries.length} timetable entries`.green);
 
-  console.log("Seed complete!".cyan.bold);
+  console.log("Seed complete! Log in with demo@example.com / demo123".cyan.bold);
   process.exit(0);
 };
 

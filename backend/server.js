@@ -4,6 +4,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const colors = require("colors");
 const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const subjectRoutes = require("./routes/subjectRoutes");
 const timetableRoutes = require("./routes/timetableRoutes");
@@ -18,7 +19,8 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Routes
+// Routes (auth is public; others protected in their routers)
+app.use("/api/auth", authRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/timetable-manage", timetableRoutes);

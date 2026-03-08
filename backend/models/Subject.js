@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const SubjectSchema = new mongoose.Schema(
   {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     name: {
       type: String,
       required: [true, "Subject name is required"],
@@ -16,7 +21,6 @@ const SubjectSchema = new mongoose.Schema(
       type: String,
       required: [true, "Subject code is required"],
       trim: true,
-      unique: true,
     },
     totalConducted: {
       type: Number,
@@ -61,6 +65,8 @@ SubjectSchema.virtual("safeBunks").get(function () {
   );
   return Math.max(0, val);
 });
+
+SubjectSchema.index({ user: 1, code: 1 }, { unique: true });
 
 SubjectSchema.set("toJSON", { virtuals: true });
 SubjectSchema.set("toObject", { virtuals: true });

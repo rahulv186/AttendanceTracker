@@ -4,7 +4,7 @@ const TimetableEntry = require("../models/Timetable");
 
 const createSubject = async (req, res) => {
   try {
-    const data = req.body;
+    const data = { ...req.body, user: req.user.id };
 
     // Auto-calculate canBunk if missing (assuming 75% rule)
     if (data.canBunk === undefined && data.totalPlanned) {
@@ -23,10 +23,11 @@ const updateSubject = async (req, res) => {
     const { id } = req.params;
     const data = req.body;
 
-    const subject = await Subject.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
-    });
+    const subject = await Subject.findOneAndUpdate(
+      { _id: id, user: req.user.id },
+      data,
+      { new: true, runValidators: true }
+    );
     if (!subject)
       return res
         .status(404)
@@ -41,7 +42,7 @@ const updateSubject = async (req, res) => {
 const deleteSubject = async (req, res) => {
   try {
     const { id } = req.params;
-    const subject = await Subject.findByIdAndDelete(id);
+    const subject = await Subject.findOneAndDelete({ _id: id, user: req.user.id });
 
     if (!subject)
       return res
@@ -68,13 +69,14 @@ const bulkUpsertSubjects = async (req, res) => {
         .json({ success: false, message: "Expected an array of subjects" });
     }
 
+    const userId = req.user.id;
     const operations = subjects.map((sub) => {
       if (sub._id && sub._id.length === 24) {
-        // Update existing (excluding _id from $set)
+        // Update existing (excluding _id from $set), only if owned by user
         const { _id, ...updateData } = sub;
         return {
           updateOne: {
-            filter: { _id },
+            filter: { _id, user: userId },
             update: { $set: updateData },
           },
         };
@@ -83,7 +85,7 @@ const bulkUpsertSubjects = async (req, res) => {
         const { _id, ...insertData } = sub;
         return {
           insertOne: {
-            document: insertData,
+            document: { ...insertData, user: userId },
           },
         };
       }
