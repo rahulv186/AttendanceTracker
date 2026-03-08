@@ -55,7 +55,7 @@ export default function Navbar({ activeTab, onTabChange, theme, toggleTheme }) {
             </div>
             <div className="hidden sm:block min-w-0">
               <h1 className="text-base font-bold text-slate-800 dark:text-white truncate">
-                Attendance Tracker
+                SRM Attendance Tracker
               </h1>
               <p className="text-[10px] text-slate-500 dark:text-gray-500 -mt-0.5 truncate">
                 Smart attendance management

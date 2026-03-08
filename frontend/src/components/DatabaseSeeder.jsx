@@ -65,6 +65,7 @@ export default function DatabaseSeeder({ onUpdate }) {
         _modified: false,
         _isNew: false,
       }));
+      console.log(editableSubjects);
       setSubjects(editableSubjects);
 
       // 2. Load Timetable
@@ -251,9 +252,7 @@ export default function DatabaseSeeder({ onUpdate }) {
   const handleChange = (index, field, value) => {
     const updated = [...subjects];
     if (
-      ["totalConducted", "totalAttended", "totalPlanned", "canBunk"].includes(
-        field,
-      )
+      ["totalConducted", "totalAttended", "totalPlanned", "canBunk"].includes(field,)
     ) {
       value = value === "" ? 0 : Number(value);
     }
@@ -391,12 +390,12 @@ export default function DatabaseSeeder({ onUpdate }) {
             size={24}
           />
           <h2 className="text-xl font-bold text-slate-800 dark:text-white transition-colors">
-            Database & Subjects Management
+            Subjects & Timetable Management
           </h2>
         </div>
         <p className="text-sm text-slate-500 dark:text-gray-400 transition-colors">
-          Initialize your database, reset terms, manage existing subjects, and
-          configure your weekly timetable dynamically.
+          Initialize your Subjects, Attendance and Timetable, reset terms, manage existing subjects, and
+          configure your weekly timetable.
         </p>
       </div>
 
@@ -423,6 +422,8 @@ export default function DatabaseSeeder({ onUpdate }) {
         ) : (
           <div className="space-y-4">
             {subjects.map((sub, idx) => {
+              console.log(sub.shortName);
+              
               const livePct = calculatePct(
                 sub.totalAttended,
                 sub.totalConducted,
@@ -787,10 +788,10 @@ export default function DatabaseSeeder({ onUpdate }) {
 
       {/* QUICK SEEDERS (Original Danger/Automated) */}
       <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 mt-8 transition-colors">
-        Automated Quick Actions
+        Automated Data Entry Only For CSE L
       </h3>
       <p className="text-xs text-slate-500 dark:text-gray-400 mb-4 transition-colors">
-        Fast template seeding and database wipes.
+        Fast data input
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -802,11 +803,11 @@ export default function DatabaseSeeder({ onUpdate }) {
                 className="text-indigo-600 dark:text-indigo-400"
               />
               <h3 className="text-base font-bold text-slate-800 dark:text-white transition-colors">
-                Seed Template Subjects
+                CSE L Subjects Template
               </h3>
             </div>
             <p className="text-xs text-slate-500 dark:text-gray-400 mb-4 transition-colors">
-              Populates default backend subjects. Replaces existing inputs.
+              Populates preloaded CSE L subjects. Replaces existing data.
             </p>
           </div>
           <button
@@ -814,7 +815,7 @@ export default function DatabaseSeeder({ onUpdate }) {
             disabled={!!loading}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-light-800 dark:bg-dark-700 hover:bg-indigo-600 dark:hover:bg-indigo-600 border border-light-500 dark:border-dark-600 text-slate-800 dark:text-white hover:text-white rounded-lg text-sm font-semibold transition-all"
           >
-            Execute Script
+            Execute
           </button>
         </div>
 
@@ -826,12 +827,11 @@ export default function DatabaseSeeder({ onUpdate }) {
                 className="text-cyan-600 dark:text-cyan-400"
               />
               <h3 className="text-base font-bold text-slate-800 dark:text-white transition-colors">
-                Seed Template Timetable
+                CSE L TimeTable Template
               </h3>
             </div>
             <p className="text-xs text-slate-500 dark:text-gray-400 mb-4 transition-colors">
-              Uses exact codes to build timetable automatically from backend
-              template.
+              Autofills Timetable for CSE L.
             </p>
           </div>
           <button
@@ -839,8 +839,7 @@ export default function DatabaseSeeder({ onUpdate }) {
             disabled={!!loading}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-light-800 dark:bg-dark-700 hover:bg-cyan-600 dark:hover:bg-cyan-600 border border-light-500 dark:border-dark-600 text-slate-800 dark:text-white hover:text-white rounded-lg text-sm font-semibold transition-all"
           >
-            Execute Script
-          </button>
+            Execute         </button>
         </div>
       </div>
 

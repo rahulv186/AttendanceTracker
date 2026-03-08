@@ -29,6 +29,8 @@ const getAttendance = async (req, res) => {
         _id: sub._id,
         name: sub.name,
         code: sub.code,
+        shortName: sub.shortName,
+        canBunk: sub.canBunk,
         totalConducted: sub.totalConducted,
         totalAttended: sub.totalAttended,
         totalPlanned: sub.totalPlanned,
