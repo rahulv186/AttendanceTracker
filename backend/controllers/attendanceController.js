@@ -161,6 +161,7 @@ const updateAttendance = async (req, res) => {
 const predictAttendance = async (req, res) => {
   try {
     const userId = req.user.id;
+
     const subjects = await Subject.find({ user: userId });
     const timetable = await TimetableEntry.find({ user: userId }).populate("subject");
 
@@ -173,9 +174,10 @@ const predictAttendance = async (req, res) => {
 
     const daySchedule = buildDaySchedule(timetable);
 
-    // Semester end: 30th April of current year (configurable)
-    const today = new Date();
-    const semesterEnd = new Date(today.getFullYear(), 3, 30); // April 30
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const semesterEnd = new Date(today.getFullYear(), 3, 30, 0, 0, 0, 0);
 
     const { subjectResults, allSafeDate, allReached } = runPrediction(
       today,
@@ -184,10 +186,10 @@ const predictAttendance = async (req, res) => {
       subjects,
     );
 
-    // Also include classesNeededFor75
     const enriched = {};
     for (const sub of subjects) {
       const id = sub._id.toString();
+
       enriched[id] = {
         ...subjectResults[id],
         classesNeededFor75: getClassesNeededFor75(
@@ -206,12 +208,11 @@ const predictAttendance = async (req, res) => {
       allSafeDate,
       allReached,
     });
+
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
-};
-
-// ─── GET /attendance/projection ───────────────────────────────────────────────
+};// ─── GET /attendance/projection ───────────────────────────────────────────────
 /**
  * Calculates final % if student attends ALL remaining classes.
  * Also tells if 75% is impossible.
