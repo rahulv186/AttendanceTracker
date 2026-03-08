@@ -5,6 +5,8 @@ import { CheckCircle, XCircle, Calendar, Send } from "lucide-react";
 
 export default function DailyAttendance({ onUpdate }) {
   const today = new Date().toISOString().split("T")[0];
+  console.log(today);
+  
   const [date, setDate] = useState(today);
   const [dayInfo, setDayInfo] = useState(null); // { day, classes }
   const [loading, setLoading] = useState(false);
