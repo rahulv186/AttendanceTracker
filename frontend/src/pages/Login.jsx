@@ -59,7 +59,17 @@ export default function Login() {
         navigate("/", { replace: true });
       }
     } catch (err) {
-      setApiError(err.message?.includes("Invalid") ? "Invalid email or password" : err.message || "Login failed");
+      let message = err.message || "Login failed";
+
+      if (err.status === 400) {
+        message = "Please fill all required fields";
+      } else if (err.status === 401) {
+        message = "Invalid email or password";
+      } else if (err.status >= 500) {
+        message = "Something went wrong. Please try again.";
+      }
+
+      setApiError(message);
     } finally {
       setLoading(false);
     }

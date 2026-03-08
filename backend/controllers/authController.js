@@ -19,7 +19,7 @@ const register = async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Name, email and password are required",
+        message: "Please fill all required fields",
       });
     }
 
@@ -27,10 +27,17 @@ const register = async (req, res) => {
     if (existing) {
       return res
         .status(400)
-        .json({ success: false, message: "Email already registered" });
+        .json({
+          success: false,
+          message: "An account with this email already exists",
+        });
     }
 
-    const user = await User.create({ name, email: email.toLowerCase(), password });
+    const user = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password,
+    });
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -43,7 +50,19 @@ const register = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    // Handle duplicate email errors from Mongo/Mongoose gracefully
+    if (err && (err.code === 11000 || err.name === "MongoServerError")) {
+      return res.status(400).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+    }
+
+    console.error("Auth register error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please try again.",
+    });
   }
 };
 
@@ -58,7 +77,7 @@ const login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: "Please fill all required fields",
       });
     }
 
@@ -88,7 +107,11 @@ const login = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error("Auth login error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please try again.",
+    });
   }
 };
 
@@ -100,7 +123,11 @@ const getMe = async (req, res) => {
   try {
     res.json({ success: true, user: req.user });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error("Auth getMe error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please try again.",
+    });
   }
 };
 

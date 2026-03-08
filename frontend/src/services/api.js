@@ -24,8 +24,8 @@ API.interceptors.response.use(
   (response) => response.data,
   (error) => {
     const status = error?.response?.status;
-    const message =
-      error?.response?.data?.message || error.message || "Network Error";
+    const backendMessage = error?.response?.data?.message;
+
     if (status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -34,7 +34,30 @@ API.interceptors.response.use(
         window.location.href = "/login";
       }
     }
-    return Promise.reject(new Error(message));
+
+    let message;
+
+    if (status >= 500) {
+      // Hide technical server errors / stack traces
+      message = "Something went wrong. Please try again.";
+    } else if (
+      status === 400 &&
+      backendMessage &&
+      /required|validation/i.test(backendMessage)
+    ) {
+      message = "Please fill all required fields";
+    } else if (backendMessage) {
+      message = backendMessage;
+    } else if (error.message) {
+      message = error.message;
+    } else {
+      message = "Network error. Please try again.";
+    }
+
+    const customError = new Error(message);
+    customError.status = status;
+
+    return Promise.reject(customError);
   },
 );
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GraduationCap, Loader2 } from "lucide-react";
-import API from "../services/api";
+import API, { setToken } from "../services/api";
 import AuthThemeToggle from "../components/AuthThemeToggle";
 import PasswordInput from "../components/PasswordInput";
 import { validateName, validateEmail, validatePassword } from "../utils/validation";
@@ -51,15 +51,39 @@ export default function Register() {
     setLoading(true);
     setApiError("");
     try {
-      await API.post("/auth/register", {
+      const data = await API.post("/auth/register", {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
       });
-      navigate("/login", { replace: true });
+      if (data?.token) {
+        setToken(data.token);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+        navigate("/", { replace: true });
+      } else {
+        // Fallback: if token missing for some reason, send user to login
+        navigate("/login", { replace: true });
+      }
     } catch (err) {
-      const msg = err.message || "Registration failed";
-      setApiError(msg.includes("already") ? "User already exists" : msg);
+      let message = err.message || "Registration failed";
+
+      if (
+        err.status === 400 &&
+        message.toLowerCase().includes("account with this email")
+      ) {
+        message = "An account with this email already exists";
+      } else if (
+        err.status === 400 &&
+        /required|validation/i.test(message)
+      ) {
+        message = "Please fill all required fields";
+      } else if (err.status >= 500) {
+        message = "Something went wrong. Please try again.";
+      }
+
+      setApiError(message);
     } finally {
       setLoading(false);
     }
