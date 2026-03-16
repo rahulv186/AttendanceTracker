@@ -13,6 +13,78 @@ const {
   buildDaySchedule,
   runPrediction,
 } = require("../utils/predictionEngine");
+const { parseAttendanceScreenshot } = require("../utils/attendanceImageParser");
+
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+const normalizeDateOnly = (dateInput) => {
+  const date = new Date(dateInput);
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
+};
+
+const upsertAttendanceLogForSubject = async ({
+  userId,
+  subjectId,
+  date,
+  period,
+  status,
+}) => {
+  const normalizedDate = normalizeDateOnly(date);
+
+  const subject = await Subject.findOne({ _id: subjectId, user: userId });
+  if (!subject) {
+    return { action: "missing_subject" };
+  }
+
+  const existing = await AttendanceLog.findOne({
+    user: userId,
+    subject: subjectId,
+    date: normalizedDate,
+    period,
+  });
+
+  if (existing) {
+    if (existing.status === status) {
+      return { action: "unchanged" };
+    }
+
+    const oldStatus = existing.status;
+    existing.status = status;
+    await existing.save();
+
+    if (oldStatus !== status) {
+      if (status === "present") subject.totalAttended += 1;
+      else subject.totalAttended -= 1;
+      await subject.save();
+    }
+
+    return { action: "updated" };
+  }
+
+  await AttendanceLog.create({
+    user: userId,
+    subject: subjectId,
+    date: normalizedDate,
+    period,
+    status,
+  });
+
+  subject.totalConducted += 1;
+  if (status === "present") subject.totalAttended += 1;
+  await subject.save();
+
+  return { action: "created" };
+};
 
 // ─── GET /attendance ──────────────────────────────────────────────────────────
 /**
@@ -228,51 +300,33 @@ const updateAttendance = async (req, res) => {
         .json({ success: false, message: "Subject not found" });
     }
 
-    // Check for duplicate log for same date+period+subject
-    const existing = await AttendanceLog.findOne({
-      user: userId,
-      subject: subjectId,
-      date: new Date(date),
-      period,
+    await upsertAttendanceLogForSubject({
+      userId,
+      subjectId,
+      date,
+      period: Number(period),
+      status,
     });
-    if (existing) {
-      // Update existing log
-      const oldStatus = existing.status;
-      existing.status = status;
-      await existing.save();
 
-      // Adjust counters
-      if (oldStatus !== status) {
-        if (status === "present") subject.totalAttended += 1;
-        else subject.totalAttended -= 1;
-      }
-    } else {
-      // New log
-      await AttendanceLog.create({
-        user: userId,
-        subject: subjectId,
-        date: new Date(date),
-        period,
-        status,
-      });
-      subject.totalConducted += 1;
-      if (status === "present") subject.totalAttended += 1;
-    }
-
-    await subject.save();
-
-    const pct = getPercentage(subject.totalAttended, subject.totalConducted);
+    const updatedSubject = await Subject.findOne({ _id: subjectId, user: userId });
+    const pct = getPercentage(
+      updatedSubject.totalAttended,
+      updatedSubject.totalConducted,
+    );
     res.json({
       success: true,
       message: "Attendance updated",
       subject: {
-        _id: subject._id,
-        name: subject.name,
-        code: subject.code,
-        totalConducted: subject.totalConducted,
-        totalAttended: subject.totalAttended,
+        _id: updatedSubject._id,
+        name: updatedSubject.name,
+        code: updatedSubject.code,
+        totalConducted: updatedSubject.totalConducted,
+        totalAttended: updatedSubject.totalAttended,
         attendancePercentage: pct,
-        safeBunks: getSafeBunks(subject.totalAttended, subject.totalConducted),
+        safeBunks: getSafeBunks(
+          updatedSubject.totalAttended,
+          updatedSubject.totalConducted,
+        ),
         riskLevel: getRiskLevel(pct),
       },
     });
@@ -397,6 +451,125 @@ const getProjection = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─── POST /attendance/import-screenshot ──────────────────────────────────────
+/**
+ * Multipart form-data:
+ * - image: screenshot file
+ * - minConfidence (optional): OCR confidence threshold (default 60)
+ */
+const importAttendanceFromScreenshot = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const minConfidence = Number(req.body?.minConfidence ?? 60);
+
+    if (!req.file || !req.file.buffer) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Image file is required." });
+    }
+
+    const { entries, diagnostics } = await parseAttendanceScreenshot(req.file.buffer);
+    if (!entries.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Could not detect attendance rows from screenshot.",
+        diagnostics,
+      });
+    }
+
+    const timetableEntries = await TimetableEntry.find({ user: userId })
+      .populate("subject", "_id name code")
+      .lean();
+
+    const timetableMap = {};
+    for (const entry of timetableEntries) {
+      timetableMap[`${entry.day}-${entry.period}`] = entry.subject?._id?.toString();
+    }
+
+    const summary = {
+      parsedCells: entries.length,
+      created: 0,
+      updated: 0,
+      unchanged: 0,
+      skippedDash: 0,
+      skippedLowConfidence: 0,
+      skippedNoTimetableClass: 0,
+      skippedMissingSubject: 0,
+    };
+
+    const skipped = [];
+
+    for (const cell of entries) {
+      if (cell.status === "-") {
+        summary.skippedDash += 1;
+        continue;
+      }
+
+      if (cell.confidence < minConfidence) {
+        summary.skippedLowConfidence += 1;
+        skipped.push({
+          date: cell.date,
+          period: cell.period,
+          status: cell.status,
+          confidence: Number(cell.confidence.toFixed(2)),
+          reason: "low_confidence",
+        });
+        continue;
+      }
+
+      const classDate = new Date(`${cell.date}T00:00:00.000Z`);
+      const dayName = DAY_NAMES[classDate.getUTCDay()];
+      const timetableKey = `${dayName}-${cell.period}`;
+      const subjectId = timetableMap[timetableKey];
+
+      if (!subjectId) {
+        summary.skippedNoTimetableClass += 1;
+        skipped.push({
+          date: cell.date,
+          period: cell.period,
+          status: cell.status,
+          confidence: Number(cell.confidence.toFixed(2)),
+          reason: "no_timetable_class",
+        });
+        continue;
+      }
+
+      const result = await upsertAttendanceLogForSubject({
+        userId,
+        subjectId,
+        date: cell.date,
+        period: cell.period,
+        status: cell.status === "P" ? "present" : "absent",
+      });
+
+      if (result.action === "created") summary.created += 1;
+      else if (result.action === "updated") summary.updated += 1;
+      else if (result.action === "unchanged") summary.unchanged += 1;
+      else if (result.action === "missing_subject") {
+        summary.skippedMissingSubject += 1;
+        skipped.push({
+          date: cell.date,
+          period: cell.period,
+          status: cell.status,
+          confidence: Number(cell.confidence.toFixed(2)),
+          reason: "missing_subject",
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: "Attendance import completed.",
+      minConfidence,
+      summary,
+      skipped: skipped.slice(0, 100),
+      diagnostics,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -698,6 +871,7 @@ const seedTimetable = async (req, res) => {
 module.exports = {
   getAttendance,
   getAttendanceTimeline,
+  importAttendanceFromScreenshot,
   updateAttendance,
   predictAttendance,
   getProjection,

@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { fetchDayTimetable, updateAttendance } from "../services/api";
-import { CheckCircle, XCircle, Calendar, Send } from "lucide-react";
+import {
+  fetchDayTimetable,
+  importAttendanceScreenshot,
+  updateAttendance,
+} from "../services/api";
+import { CheckCircle, XCircle, Calendar, Send, Upload } from "lucide-react";
 
 export default function DailyAttendance({ onUpdate }) {
   const today = new Date().toISOString().split("T")[0];
-  console.log(today);
-  
+
   const [date, setDate] = useState(today);
   const [dayInfo, setDayInfo] = useState(null); // { day, classes }
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [screenshotFile, setScreenshotFile] = useState(null);
+  const [minConfidence, setMinConfidence] = useState(60);
+  const [importReport, setImportReport] = useState(null);
 
   // Local state for toggling: period -> { status: 'present'|'absent', locked: boolean }
   const [attendanceState, setAttendanceState] = useState({});
@@ -96,6 +103,36 @@ export default function DailyAttendance({ onUpdate }) {
     }
   };
 
+  const handleImportScreenshot = async () => {
+    if (!screenshotFile) {
+      toast.error("Please choose a screenshot first.");
+      return;
+    }
+
+    setImporting(true);
+    setImportReport(null);
+
+    try {
+      const res = await importAttendanceScreenshot(screenshotFile, minConfidence);
+      setImportReport(res);
+
+      const changed = (res.summary?.created || 0) + (res.summary?.updated || 0);
+      if (changed > 0) {
+        toast.success(`Imported ${changed} attendance entries.`);
+      } else {
+        toast("No new attendance changes were applied.", { icon: "ℹ️" });
+      }
+
+      onUpdate();
+      loadTimetable(date);
+      setScreenshotFile(null);
+    } catch (err) {
+      toast.error(err.message || "Failed to import screenshot.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-5 animate-fade-in pb-10">
       {/* Date Control */}
@@ -127,6 +164,80 @@ export default function DailyAttendance({ onUpdate }) {
             className="px-4 py-2.5 rounded-xl bg-light-800 dark:bg-dark-700 border border-light-500 dark:border-dark-500 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-50"
           />
         </div>
+      </div>
+
+      <div className="glass-card p-5 space-y-4">
+        <div>
+          <h2 className="text-base font-semibold text-slate-800 dark:text-white flex items-center gap-2 transition-colors">
+            <Upload size={18} className="text-cyan-600 dark:text-cyan-400" />
+            Auto Import From Screenshot
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-gray-400 mt-1 transition-colors">
+            Upload your Hour Attendance screenshot. Only high-confidence reads
+            are auto-marked.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input
+            type="file"
+            accept="image/*"
+            disabled={importing}
+            onChange={(e) => setScreenshotFile(e.target.files?.[0] || null)}
+            className="md:col-span-2 px-3 py-2.5 rounded-xl bg-light-800 dark:bg-dark-700 border border-light-500 dark:border-dark-500 text-slate-700 dark:text-gray-300 text-sm focus:outline-none"
+          />
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-500 dark:text-gray-400 whitespace-nowrap">
+              Min confidence
+            </label>
+            <input
+              type="number"
+              min={40}
+              max={95}
+              value={minConfidence}
+              onChange={(e) => setMinConfidence(Number(e.target.value))}
+              disabled={importing}
+              className="w-24 px-3 py-2 rounded-xl bg-light-800 dark:bg-dark-700 border border-light-500 dark:border-dark-500 text-slate-800 dark:text-white text-sm focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={handleImportScreenshot}
+            disabled={importing || !screenshotFile}
+            className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {importing ? "Importing..." : "Import Screenshot"}
+          </button>
+        </div>
+
+        {importReport?.summary && (
+          <div className="rounded-xl border border-light-600 dark:border-dark-600 bg-light-800/70 dark:bg-dark-700/60 p-4 text-xs text-slate-600 dark:text-gray-300 space-y-1">
+            <p>
+              Parsed cells: <strong>{importReport.summary.parsedCells}</strong> |
+              Created: <strong>{importReport.summary.created}</strong> | Updated:{" "}
+              <strong>{importReport.summary.updated}</strong> | Unchanged:{" "}
+              <strong>{importReport.summary.unchanged}</strong>
+            </p>
+            <p>
+              Skipped: dash <strong>{importReport.summary.skippedDash}</strong>,
+              low confidence{" "}
+              <strong>{importReport.summary.skippedLowConfidence}</strong>, no
+              class <strong>{importReport.summary.skippedNoTimetableClass}</strong>
+            </p>
+            {importReport.skipped?.length > 0 && (
+              <p className="text-amber-600 dark:text-amber-400">
+                Skipped sample:{" "}
+                {importReport.skipped
+                  .slice(0, 5)
+                  .map((s) => `${s.date} P${s.period} (${s.reason})`)
+                  .join(" · ")}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {loading ? (
