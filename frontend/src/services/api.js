@@ -69,14 +69,6 @@ export const fetchPrediction = () => API.get("/attendance/predict");
 export const fetchProjection = () => API.get("/attendance/projection");
 export const fetchDayTimetable = (date) =>
   API.get("/attendance/day-timetable", { params: { date } });
-export const importAttendanceScreenshot = (file, minConfidence = 60) => {
-  const formData = new FormData();
-  formData.append("image", file);
-  formData.append("minConfidence", String(minConfidence));
-  return API.post("/attendance/import-screenshot", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-};
 export const seedSubjects = (overwrite) =>
   API.post("/attendance/seed-subjects", { overwrite });
 export const seedTimetable = () => API.post("/attendance/seed-timetable");
