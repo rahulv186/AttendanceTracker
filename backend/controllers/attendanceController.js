@@ -71,6 +71,133 @@ const getAttendance = async (req, res) => {
   }
 };
 
+// ─── GET /attendance/timeline ────────────────────────────────────────────────
+/**
+ * Returns day-wise cumulative attendance percentage for each subject,
+ * from first logged day to today.
+ */
+const getAttendanceTimeline = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const subjects = await Subject.find({ user: userId }).sort({ name: 1 });
+
+    const subjectState = {};
+    for (const subject of subjects) {
+      subjectState[subject._id.toString()] = { attended: 0, conducted: 0 };
+    }
+
+    const logs = await AttendanceLog.find({ user: userId })
+      .sort({ date: 1, period: 1 })
+      .lean();
+
+    if (logs.length === 0) {
+      return res.json({
+        success: true,
+        startDate: null,
+        endDate: null,
+        labels: [],
+        subjects: subjects.map((subject) => ({
+          _id: subject._id,
+          name: subject.name,
+          shortName: subject.shortName,
+          code: subject.code,
+          color: subject.color,
+          data: [],
+        })),
+      });
+    }
+
+    const toUtcStartOfDay = (dateInput) => {
+      const date = new Date(dateInput);
+      return new Date(
+        Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+      );
+    };
+
+    const toDateKey = (dateInput) => {
+      const date = new Date(dateInput);
+      return date.toISOString().slice(0, 10);
+    };
+
+    const startDate = toUtcStartOfDay(logs[0].date);
+    const now = new Date();
+    const endDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
+
+    const logsByDate = {};
+    for (const log of logs) {
+      const key = toDateKey(log.date);
+      if (!logsByDate[key]) logsByDate[key] = [];
+      logsByDate[key].push(log);
+    }
+
+    const labels = [];
+    const subjectSeries = {};
+    for (const subject of subjects) {
+      subjectSeries[subject._id.toString()] = [];
+    }
+
+    for (
+      let cursor = new Date(startDate);
+      cursor <= endDate;
+      cursor.setUTCDate(cursor.getUTCDate() + 1)
+    ) {
+      const dayDate = new Date(cursor);
+      const dayKey = toDateKey(dayDate);
+
+      labels.push({
+        date: dayKey,
+        label: dayDate.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          timeZone: "UTC",
+        }),
+      });
+
+      const dayLogs = logsByDate[dayKey] || [];
+      for (const log of dayLogs) {
+        const subjectId = log.subject.toString();
+        if (!subjectState[subjectId]) continue;
+        subjectState[subjectId].conducted += 1;
+        if (log.status === "present") {
+          subjectState[subjectId].attended += 1;
+        }
+      }
+
+      for (const subject of subjects) {
+        const subjectId = subject._id.toString();
+        const state = subjectState[subjectId];
+        subjectSeries[subjectId].push(
+          getPercentage(state.attended, state.conducted),
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      startDate: toDateKey(startDate),
+      endDate: toDateKey(endDate),
+      labels,
+      subjects: subjects.map((subject) => {
+        const subjectId = subject._id.toString();
+        const data = subjectSeries[subjectId];
+        return {
+          _id: subject._id,
+          name: subject.name,
+          shortName: subject.shortName,
+          code: subject.code,
+          color: subject.color,
+          data,
+          latestPercentage: data.length > 0 ? data[data.length - 1] : 0,
+        };
+      }),
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // ─── POST /attendance/update ──────────────────────────────────────────────────
 /**
  * Body: { subjectId, date, period, status: 'present'|'absent' }
@@ -570,6 +697,7 @@ const seedTimetable = async (req, res) => {
 
 module.exports = {
   getAttendance,
+  getAttendanceTimeline,
   updateAttendance,
   predictAttendance,
   getProjection,

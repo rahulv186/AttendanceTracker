@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require("../middleware/auth");
 const {
   getAttendance,
+  getAttendanceTimeline,
   updateAttendance,
   predictAttendance,
   getProjection,
@@ -17,6 +18,7 @@ router.use(authMiddleware);
 
 // GET  /api/attendance
 router.get("/", getAttendance);
+router.get("/timeline", getAttendanceTimeline);
 
 // POST /api/attendance/update
 router.post("/update", updateAttendance);

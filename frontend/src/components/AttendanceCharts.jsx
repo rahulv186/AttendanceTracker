@@ -63,7 +63,6 @@ export default function AttendanceCharts({ subjects }) {
   }
 
   const labels = subjects.map((s) => s.shortName || s.code);
-  console.log(labels);
   const percentages = subjects.map((s) => s.attendancePercentage);
   const safeBunks = subjects.map((s) => s.safeBunks);
 

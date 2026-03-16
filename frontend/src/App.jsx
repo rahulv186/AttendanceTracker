@@ -6,8 +6,9 @@ import DailyAttendance from "./components/DailyAttendance";
 import PredictionPanel from "./components/PredictionPanel";
 import ProjectionPanel from "./components/ProjectionPanel";
 import AttendanceCharts from "./components/AttendanceCharts";
+import AttendanceTimeline from "./components/AttendanceTimeline";
 import DatabaseSeeder from "./components/DatabaseSeeder";
-import { fetchAttendance } from "./services/api";
+import { fetchAttendance, fetchAttendanceTimeline } from "./services/api";
 import { Loader, AlertTriangle } from "lucide-react";
 
 export default function App() {
@@ -15,6 +16,9 @@ export default function App() {
   const [attendanceData, setAttendanceData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [timelineData, setTimelineData] = useState(null);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [timelineError, setTimelineError] = useState(null);
 
   // Theme State
   const [theme, setTheme] = useState(() => {
@@ -51,6 +55,25 @@ export default function App() {
   useEffect(() => {
     loadAttendance();
   }, [loadAttendance]);
+
+  const loadTimeline = useCallback(async () => {
+    setTimelineLoading(true);
+    setTimelineError(null);
+    try {
+      const data = await fetchAttendanceTimeline();
+      setTimelineData(data);
+    } catch (err) {
+      setTimelineError(err.message);
+    } finally {
+      setTimelineLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "timeline") {
+      loadTimeline();
+    }
+  }, [activeTab, loadTimeline]);
 
   return (
     <div className="min-h-screen bg-light-900 dark:bg-dark-900 transition-colors duration-300">
@@ -107,6 +130,11 @@ export default function App() {
                 <span className="text-gradient-purple">Analytics</span>
               </span>
             )}
+            {activeTab === "timeline" && (
+              <span>
+                Attendance <span className="text-gradient-cyan">Timeline</span>
+              </span>
+            )}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             {activeTab === "dashboard" &&
@@ -115,6 +143,8 @@ export default function App() {
               "Mark today's attendance and update your records"}
             {activeTab === "charts" &&
               "Visual insights into your attendance patterns"}
+            {activeTab === "timeline" &&
+              "Subject-wise attendance percentage from day 1 to today"}
           </p>
         </div>
 
@@ -186,6 +216,15 @@ export default function App() {
 
             {activeTab === "charts" && (
               <AttendanceCharts subjects={attendanceData.subjects} />
+            )}
+
+            {activeTab === "timeline" && (
+              <AttendanceTimeline
+                data={timelineData}
+                loading={timelineLoading}
+                error={timelineError}
+                onRetry={loadTimeline}
+              />
             )}
 
             {activeTab === "seeder" && (

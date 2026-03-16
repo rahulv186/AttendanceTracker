@@ -62,6 +62,7 @@ API.interceptors.response.use(
 );
 
 export const fetchAttendance = () => API.get("/attendance");
+export const fetchAttendanceTimeline = () => API.get("/attendance/timeline");
 export const updateAttendance = (payload) =>
   API.post("/attendance/update", payload);
 export const fetchPrediction = () => API.get("/attendance/predict");

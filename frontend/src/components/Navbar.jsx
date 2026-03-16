@@ -4,6 +4,7 @@ import {
   GraduationCap,
   Activity,
   BarChart3,
+  LineChart,
   Database,
   Sun,
   Moon,
@@ -31,6 +32,7 @@ export default function Navbar({ activeTab, onTabChange, theme, toggleTheme }) {
     { id: "dashboard", label: "Dashboard", icon: Activity },
     { id: "attendance", label: "Daily Attendance", icon: GraduationCap },
     { id: "charts", label: "Analytics", icon: BarChart3 },
+    { id: "timeline", label: "Timeline", icon: LineChart },
     { id: "seeder", label: "Input Details", icon: Database },
   ];
 
