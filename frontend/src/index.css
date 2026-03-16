@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,81 +14,56 @@
   }
 
   body {
-    @apply font-sans antialiased transition-colors duration-300;
-    color: #0f172a;
-    background:
-      radial-gradient(60rem 32rem at 15% -10%, rgba(10, 132, 255, 0.16), transparent 52%),
-      radial-gradient(56rem 34rem at 95% -15%, rgba(48, 209, 88, 0.14), transparent 50%),
-      linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
-    min-height: 100vh;
+    @apply bg-light-800 dark:bg-dark-900 text-slate-800 dark:text-gray-100 font-sans antialiased transition-colors duration-300;
   }
 
+  /* Only apply dark radial background in dark mode */
   .dark body {
-    color: #e2e8f0;
-    background:
-      radial-gradient(64rem 34rem at 12% -14%, rgba(10, 132, 255, 0.2), transparent 52%),
-      radial-gradient(56rem 36rem at 92% -12%, rgba(94, 92, 230, 0.22), transparent 50%),
-      linear-gradient(180deg, #0c1220 0%, #0b1428 100%);
+    background: #0a0a0f;
+    background-image:
+      radial-gradient(
+        ellipse at 20% 50%,
+        rgba(99, 102, 241, 0.08) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at 80% 20%,
+        rgba(34, 211, 238, 0.06) 0%,
+        transparent 50%
+      );
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    @apply bg-light-700 dark:bg-dark-800 transition-colors duration-300;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.45);
-    border-radius: 9999px;
+    @apply bg-light-500 dark:bg-dark-500 rounded-full transition-colors duration-300;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(10, 132, 255, 0.6);
+    @apply bg-accent-purple;
   }
 }
 
 @layer components {
   .glass-card {
-    border-radius: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.62);
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.86) 0%,
-      rgba(255, 255, 255, 0.74) 100%
-    );
-    box-shadow:
-      0 18px 44px rgba(30, 64, 175, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.66);
-    backdrop-filter: blur(24px);
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    @apply bg-white dark:bg-dark-800 border border-light-600 dark:border-dark-600 rounded-2xl shadow-sm dark:shadow-none;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
   }
 
   .glass-card:hover {
-    transform: translateY(-1px);
-    box-shadow:
-      0 22px 52px rgba(30, 64, 175, 0.16),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    border-color: rgba(200, 226, 255, 0.95);
-  }
-
-  .dark .glass-card {
-    border: 1px solid rgba(148, 163, 184, 0.24);
-    background: linear-gradient(
-      180deg,
-      rgba(15, 23, 42, 0.74) 0%,
-      rgba(15, 23, 42, 0.62) 100%
-    );
-    box-shadow:
-      0 22px 48px rgba(2, 6, 23, 0.52),
-      inset 0 1px 0 rgba(148, 163, 184, 0.2);
+    @apply border-light-500 dark:border-dark-500;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.05);
   }
 
   .dark .glass-card:hover {
-    box-shadow:
-      0 26px 60px rgba(2, 6, 23, 0.62),
-      inset 0 1px 0 rgba(148, 163, 184, 0.28);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
   }
 
   .stat-value {
@@ -115,28 +88,24 @@
   }
 
   .btn-primary {
-    @apply px-6 py-3 rounded-2xl font-semibold text-sm transition-all duration-300 cursor-pointer text-white;
-    background: linear-gradient(180deg, #24a0ff 0%, #0a84ff 100%);
-    box-shadow:
-      0 12px 24px rgba(10, 132, 255, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    @apply px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 cursor-pointer;
+    @apply bg-accent-purple hover:bg-indigo-500 text-white;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
   }
 
   .btn-primary:hover {
-    box-shadow:
-      0 18px 34px rgba(10, 132, 255, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    box-shadow: 0 6px 30px rgba(99, 102, 241, 0.5);
     transform: translateY(-1px);
   }
 
   .btn-success {
-    @apply px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 cursor-pointer text-white;
-    background: linear-gradient(180deg, #35d76a 0%, #30d158 100%);
+    @apply px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 cursor-pointer;
+    @apply bg-emerald-600 hover:bg-emerald-500 text-white;
   }
 
   .btn-danger {
-    @apply px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 cursor-pointer text-white;
-    background: linear-gradient(180deg, #ff6f65 0%, #ff453a 100%);
+    @apply px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 cursor-pointer;
+    @apply bg-rose-600 hover:bg-rose-500 text-white;
   }
 
   .risk-badge {
@@ -144,55 +113,32 @@
   }
 
   .risk-badge.green {
-    @apply border;
-    background: rgba(48, 209, 88, 0.15);
-    color: #1f8f42;
-    border-color: rgba(48, 209, 88, 0.36);
+    @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
   }
 
   .risk-badge.yellow {
-    @apply border;
-    background: rgba(255, 159, 10, 0.16);
-    color: #b86b00;
-    border-color: rgba(255, 159, 10, 0.38);
+    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30;
   }
 
   .risk-badge.red {
-    @apply border;
-    background: rgba(255, 69, 58, 0.16);
-    color: #c13b34;
-    border-color: rgba(255, 69, 58, 0.4);
-  }
-
-  .dark .risk-badge.green {
-    color: #4ade80;
-  }
-
-  .dark .risk-badge.yellow {
-    color: #fbbf24;
-  }
-
-  .dark .risk-badge.red {
-    color: #fb7185;
+    @apply bg-rose-500/20 text-rose-400 border border-rose-500/30;
   }
 }
 
 @layer utilities {
   .text-gradient-purple {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(92deg, #0a84ff, #64d2ff);
+    @apply bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent;
   }
 
   .text-gradient-cyan {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(92deg, #30d158, #64d2ff);
+    @apply bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent;
   }
 
   .glow-purple {
-    box-shadow: 0 0 20px rgba(10, 132, 255, 0.35);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
   }
 
   .glow-cyan {
-    box-shadow: 0 0 20px rgba(100, 210, 255, 0.35);
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
   }
 }

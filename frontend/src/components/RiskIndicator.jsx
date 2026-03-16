@@ -8,11 +8,11 @@ export default function RiskIndicator({ percentage, riskLevel, size = "md" }) {
   const offset = circumference - (clampedPct / 100) * circumference;
 
   const colorMap = {
-    green: "#30d158",
-    yellow: "#ff9f0a",
-    red: "#ff453a",
+    green: "#10b981",
+    yellow: "#f59e0b",
+    red: "#f43f5e",
   };
-  const color = colorMap[riskLevel] || "#0a84ff";
+  const color = colorMap[riskLevel] || "#6366f1";
   const svgSize = (radius + stroke + 4) * 2;
 
   return (

@@ -30,7 +30,7 @@ export default function PasswordInput({
       <button
         type="button"
         onClick={() => setShow((s) => !s)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-xl text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-light-700/70 dark:hover:bg-dark-600 transition"
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300 hover:bg-light-600 dark:hover:bg-dark-600 transition"
         title={show ? "Hide password" : "Show password"}
         tabIndex={-1}
       >
