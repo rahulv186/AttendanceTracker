@@ -28,3 +28,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </React.StrictMode>,
 );
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/reminder-sw.js").catch(() => {
+      // Non-blocking: reminders can still work via window Notification API.
+    });
+  });
+}

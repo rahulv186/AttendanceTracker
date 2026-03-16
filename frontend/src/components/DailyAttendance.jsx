@@ -8,10 +8,23 @@ import {
   Send,
   ChevronLeft,
   ChevronRight,
+  Bell,
 } from "lucide-react";
+import {
+  getReminderSettings,
+  setReminderSettings,
+  resetReminderStateForDate,
+} from "../utils/reminder";
+import {
+  requestNotificationPermission,
+  supportsNotifications,
+} from "../utils/notifications";
 
 export default function DailyAttendance({ onUpdate }) {
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+    now.getDate(),
+  ).padStart(2, "0")}`;
   const addDays = (dateString, deltaDays) => {
     const [year, month, day] = dateString.split("-").map(Number);
     const base = new Date(Date.UTC(year, month - 1, day));
@@ -20,6 +33,8 @@ export default function DailyAttendance({ onUpdate }) {
   };
 
   const [date, setDate] = useState(today);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState("18:00");
   const [dayInfo, setDayInfo] = useState(null); // { day, classes }
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -30,6 +45,12 @@ export default function DailyAttendance({ onUpdate }) {
   useEffect(() => {
     loadTimetable(date);
   }, [date]);
+
+  useEffect(() => {
+    const settings = getReminderSettings();
+    setReminderEnabled(settings.enabled);
+    setReminderTime(settings.time);
+  }, []);
 
   const loadTimetable = async (selectedDate) => {
     setLoading(true);
@@ -112,8 +133,82 @@ export default function DailyAttendance({ onUpdate }) {
     }
   };
 
+  const handleSaveReminder = async () => {
+    if (!supportsNotifications()) {
+      toast.error("Notifications are not supported on this browser.");
+      return;
+    }
+
+    let enabled = reminderEnabled;
+    if (enabled) {
+      const permission = await requestNotificationPermission();
+      if (permission !== "granted") {
+        toast.error("Please allow notifications to enable reminders.");
+        enabled = false;
+        setReminderEnabled(false);
+      }
+    }
+
+    setReminderSettings({ enabled, time: reminderTime });
+    resetReminderStateForDate(today);
+    toast.success(
+      enabled
+        ? `Reminder set at ${reminderTime}.`
+        : "Attendance reminder turned off.",
+    );
+  };
+
   return (
     <div className="space-y-5 animate-fade-in pb-10">
+      <div className="glass-card p-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800 dark:text-white flex items-center gap-2 transition-colors">
+              <Bell size={18} className="text-sky-600 dark:text-cyan-300" />
+              Daily Reminder (Optional)
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-300 mt-1">
+              Sends a notification at selected time and every 30 minutes until
+              at least one class is marked for today.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-slate-600 dark:text-slate-300">
+              Enable
+            </label>
+            <button
+              type="button"
+              onClick={() => setReminderEnabled((v) => !v)}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
+                reminderEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-dark-600"
+              }`}
+              aria-pressed={reminderEnabled}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+                  reminderEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+            <input
+              type="time"
+              value={reminderTime}
+              onChange={(e) => setReminderTime(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-light-800 dark:bg-dark-700 border border-light-500 dark:border-dark-500 text-slate-800 dark:text-white text-sm"
+              disabled={!reminderEnabled}
+            />
+            <button
+              type="button"
+              onClick={handleSaveReminder}
+              className="btn-primary text-sm"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Date Control */}
       <div className="glass-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

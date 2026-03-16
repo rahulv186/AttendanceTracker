@@ -10,8 +10,11 @@ import AttendanceTimeline from "./components/AttendanceTimeline";
 import DatabaseSeeder from "./components/DatabaseSeeder";
 import { fetchAttendance, fetchAttendanceTimeline } from "./services/api";
 import { Loader, AlertTriangle } from "lucide-react";
+import useAttendanceReminder from "./hooks/useAttendanceReminder";
 
 export default function App() {
+  useAttendanceReminder();
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [attendanceData, setAttendanceData] = useState(null);
   const [loading, setLoading] = useState(true);
