@@ -14,20 +14,20 @@ export default function Dashboard({ data, onRefresh, loading }) {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Overall Stats */}
-      <div className="glass-card p-6">
+      <div className="glass-card p-6 md:p-7">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white transition-colors">
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-white transition-colors tracking-tight">
               Overview
             </h2>
-            <p className="text-sm text-slate-500 dark:text-gray-400 mt-0.5 transition-colors">
-              Semester at a glance
+            <p className="text-sm text-slate-500 dark:text-slate-300 mt-0.5 transition-colors">
+              Calm, clear snapshot of your current standing
             </p>
           </div>
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="p-2 rounded-xl border border-light-500 dark:border-dark-500 text-slate-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-white dark:hover:border-indigo-500 transition-all duration-300"
+            className="p-2.5 rounded-2xl border border-white/70 dark:border-dark-600 bg-white/70 dark:bg-dark-700/80 text-slate-500 hover:text-sky-600 dark:text-slate-300 dark:hover:text-cyan-200 transition-all duration-300"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
           </button>
@@ -41,7 +41,7 @@ export default function Dashboard({ data, onRefresh, loading }) {
               riskLevel={overall.riskLevel}
               size="lg"
             />
-            <p className="text-xs text-slate-500 dark:text-gray-400 uppercase tracking-widest transition-colors">
+            <p className="text-xs text-slate-500 dark:text-slate-300 uppercase tracking-widest transition-colors">
               Overall Attendance
             </p>
           </div>
@@ -96,7 +96,7 @@ export default function Dashboard({ data, onRefresh, loading }) {
 
       {/* Subject Cards Grid */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-widest mb-3 transition-colors">
+        <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-widest mb-3 transition-colors">
           Subject Breakdown
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -109,29 +109,29 @@ export default function Dashboard({ data, onRefresh, loading }) {
       {/* Recent Logs */}
       {data.recentLogs && data.recentLogs.length > 0 && (
         <div className="glass-card p-6">
-          <h2 className="text-base font-semibold text-slate-800 dark:text-white mb-4 transition-colors">
+          <h2 className="text-base font-bold text-slate-800 dark:text-white mb-4 transition-colors">
             Recent Activity
           </h2>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {data.recentLogs.map((log) => (
               <div
                 key={log._id}
-                className="flex items-center justify-between py-2 px-3 rounded-xl bg-light-800 dark:bg-dark-700 border border-light-600 dark:border-dark-600 transition-colors"
+                className="flex items-center justify-between py-2 px-3 rounded-2xl bg-white/65 dark:bg-dark-700/85 border border-white/70 dark:border-dark-600 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div
                     className="w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: log.subject?.color || "#6366f1" }}
                   />
-                  <span className="text-sm text-slate-700 dark:text-gray-300">
+                  <span className="text-sm text-slate-700 dark:text-slate-200">
                     {log.subject?.name}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-gray-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-300">
                     P{log.period}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500 dark:text-gray-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-300">
                     {new Date(log.date).toLocaleDateString("en-IN", {
                       day: "numeric",
                       month: "short",
@@ -157,28 +157,25 @@ export default function Dashboard({ data, onRefresh, loading }) {
 }
 
 function StatBox({ icon: Icon, label, value, color, bgColor }) {
-  // Use light variants for bg and replace dark borders
-  const lightBgColor = bgColor.replace("500/10", "500/5").replace("bg-", "bg-");
-
   return (
     <div
-      className={`flex items-center gap-3 p-4 rounded-xl border border-light-600 dark:border-dark-600 transition-colors ${bgColor.replace("/10", "/5")} dark:${bgColor}`}
+      className={`flex items-center gap-3 p-4 rounded-2xl border border-white/70 dark:border-dark-600 transition-colors ${bgColor.replace("/10", "/8")} dark:${bgColor}`}
     >
       <div
-        className={`w-8 h-8 rounded-lg flex items-center justify-center ${bgColor.replace("/10", "/10")} dark:${bgColor}`}
+        className={`w-9 h-9 rounded-xl flex items-center justify-center ${bgColor.replace("/10", "/12")} dark:${bgColor}`}
       >
         <Icon
           size={15}
-          className={`${color.replace("400", "600")} dark:${color}`}
+          className={`${color.replace("400", "700")} dark:${color}`}
         />
       </div>
       <div>
         <p
-          className={`text-lg font-bold ${color.replace("400", "600")} dark:${color}`}
+          className={`text-lg font-extrabold ${color.replace("400", "700")} dark:${color}`}
         >
           {value}
         </p>
-        <p className="text-[10px] text-slate-500 dark:text-gray-500 uppercase tracking-wide leading-tight">
+        <p className="text-[10px] text-slate-500 dark:text-slate-300 uppercase tracking-wide leading-tight">
           {label}
         </p>
       </div>

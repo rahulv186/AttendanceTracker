@@ -7,9 +7,9 @@ import PasswordInput from "../components/PasswordInput";
 import { validateName, validateEmail, validatePassword } from "../utils/validation";
 
 const inputBase =
-  "w-full px-4 py-3 sm:py-2.5 rounded-xl border bg-white dark:bg-dark-800 text-slate-800 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition";
+  "w-full px-4 py-3 sm:py-2.5 rounded-2xl border bg-white/80 dark:bg-dark-700/85 text-slate-800 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition";
 const inputError = "border-rose-500 dark:border-rose-500";
-const inputDefault = "border-light-600 dark:border-dark-600";
+const inputDefault = "border-white/70 dark:border-dark-600";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -93,20 +93,20 @@ export default function Register() {
     !validateName(name) && !validateEmail(email) && !validatePassword(password);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 bg-light-900 dark:bg-dark-900 transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 transition-colors duration-300">
       <AuthThemeToggle />
 
       <div className="w-full max-w-md">
         <div className="glass-card p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-[0_12px_24px_rgba(10,132,255,0.35)]">
               <GraduationCap size={24} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">
-                AttendanceIQ
+              <h1 className="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+                AttendanceOS
               </h1>
-              <p className="text-xs text-slate-500 dark:text-gray-500">
+              <p className="text-xs text-slate-500 dark:text-slate-300">
                 Create your account
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-gray-400 mb-1.5">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                 Name
               </label>
               <input
@@ -138,7 +138,7 @@ export default function Register() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-gray-400 mb-1.5">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                 Email
               </label>
               <input
@@ -155,7 +155,7 @@ export default function Register() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-gray-400 mb-1.5">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
                 Password
               </label>
               <PasswordInput
@@ -192,7 +192,7 @@ export default function Register() {
             Already have an account?{" "}
             <Link
               to="/login"
-              className="text-indigo-500 hover:text-indigo-400 font-medium"
+              className="text-sky-600 hover:text-sky-500 font-semibold"
             >
               Sign in
             </Link>

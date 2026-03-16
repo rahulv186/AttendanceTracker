@@ -5,29 +5,29 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: ["SF Pro Display", "SF Pro Text", "Plus Jakarta Sans", "sans-serif"],
       },
       colors: {
         dark: {
-          900: "#0a0a0f",
-          800: "#12121a",
-          700: "#1a1a27",
-          600: "#22223a",
-          500: "#2d2d4a",
+          900: "#0b1428",
+          800: "#0f1c34",
+          700: "#17253f",
+          600: "#223251",
+          500: "#33415f",
         },
         light: {
-          900: "#ffffff",
-          800: "#f8fafc",
-          700: "#f1f5f9",
-          600: "#e2e8f0",
-          500: "#cbd5e1",
+          900: "#f8fbff",
+          800: "#eef4ff",
+          700: "#e2ecff",
+          600: "#cad9f5",
+          500: "#a9bfdc",
         },
         accent: {
-          purple: "#6366f1",
-          cyan: "#22d3ee",
-          emerald: "#10b981",
-          amber: "#f59e0b",
-          rose: "#f43f5e",
+          purple: "#0a84ff",
+          cyan: "#64d2ff",
+          emerald: "#30d158",
+          amber: "#ff9f0a",
+          rose: "#ff453a",
         },
       },
       backgroundImage: {

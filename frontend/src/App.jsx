@@ -22,7 +22,7 @@ export default function App() {
 
   // Theme State
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("theme") || "dark";
+    return localStorage.getItem("theme") || "light";
   });
 
   // Apply theme class to document
@@ -76,16 +76,16 @@ export default function App() {
   }, [activeTab, loadTimeline]);
 
   return (
-    <div className="min-h-screen bg-light-900 dark:bg-dark-900 transition-colors duration-300">
+    <div className="min-h-screen transition-colors duration-300">
       <Toaster
         position="top-right"
         toastOptions={{
           style: {
-            background: theme === "dark" ? "#1a1a27" : "#ffffff",
-            color: theme === "dark" ? "#e5e7eb" : "#1e293b",
+            background: theme === "dark" ? "#17253f" : "#ffffff",
+            color: theme === "dark" ? "#e5e7eb" : "#0f172a",
             border:
-              theme === "dark" ? "1px solid #2d2d4a" : "1px solid #e2e8f0",
-            borderRadius: "12px",
+              theme === "dark" ? "1px solid #33415f" : "1px solid #dbeafe",
+            borderRadius: "16px",
             fontSize: "13px",
           },
           success: {
@@ -112,11 +112,11 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors duration-300">
+        <div className="mb-6 glass-card px-5 py-5 md:px-6">
+          <h1 className="text-[1.7rem] font-extrabold tracking-tight text-slate-800 dark:text-white transition-colors duration-300">
             {activeTab === "dashboard" && (
               <span>
-                Dashboard <span className="text-gradient-purple">Overview</span>
+                Dashboard <span className="text-gradient-purple">Snapshot</span>
               </span>
             )}
             {activeTab === "attendance" && (
@@ -127,7 +127,7 @@ export default function App() {
             {activeTab === "charts" && (
               <span>
                 Attendance{" "}
-                <span className="text-gradient-purple">Analytics</span>
+                <span className="text-gradient-purple">Insights</span>
               </span>
             )}
             {activeTab === "timeline" && (
@@ -136,13 +136,13 @@ export default function App() {
               </span>
             )}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-300 mt-1">
             {activeTab === "dashboard" &&
-              "Track your attendance, predictions, and projections"}
+              "Your classes, trends, and risk status in one view"}
             {activeTab === "attendance" &&
-              "Mark today's attendance and update your records"}
+              "Quickly mark attendance with a date-first workflow"}
             {activeTab === "charts" &&
-              "Visual insights into your attendance patterns"}
+              "Visual patterns to understand consistency"}
             {activeTab === "timeline" &&
               "Subject-wise attendance percentage from day 1 to today"}
           </p>
@@ -151,8 +151,8 @@ export default function App() {
         {/* Loading state */}
         {loading && (
           <div className="glass-card p-12 flex flex-col items-center justify-center gap-4">
-            <Loader size={28} className="animate-spin text-indigo-400" />
-            <p className="text-gray-400">Loading attendance data...</p>
+            <Loader size={28} className="animate-spin text-sky-500" />
+            <p className="text-slate-500 dark:text-slate-300">Loading attendance data...</p>
           </div>
         )}
 
