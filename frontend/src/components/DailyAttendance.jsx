@@ -1,12 +1,24 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { fetchDayTimetable, updateAttendance } from "../services/api";
-import { CheckCircle, XCircle, Calendar, Send } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  Calendar,
+  Send,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 export default function DailyAttendance({ onUpdate }) {
   const today = new Date().toISOString().split("T")[0];
-  console.log(today);
-  
+  const addDays = (dateString, deltaDays) => {
+    const [year, month, day] = dateString.split("-").map(Number);
+    const base = new Date(Date.UTC(year, month - 1, day));
+    base.setUTCDate(base.getUTCDate() + deltaDays);
+    return base.toISOString().slice(0, 10);
+  };
+
   const [date, setDate] = useState(today);
   const [dayInfo, setDayInfo] = useState(null); // { day, classes }
   const [loading, setLoading] = useState(false);
@@ -91,7 +103,11 @@ export default function DailyAttendance({ onUpdate }) {
           `Successfully saved attendance for ${successCount} classes.`,
         );
         onUpdate(); // Refresh dashboard stats
-        loadTimetable(date); // Reload to lock items officially
+        if (date < today) {
+          setDate(addDays(date, 1));
+        } else {
+          loadTimetable(date); // Reload to lock items officially
+        }
       }
     }
   };
@@ -118,14 +134,34 @@ export default function DailyAttendance({ onUpdate }) {
           <label className="text-xs text-slate-500 dark:text-gray-400 uppercase tracking-widest pl-1 transition-colors">
             Select Date
           </label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            disabled={loading || submitting}
-            max={today}
-            className="px-4 py-2.5 rounded-xl bg-light-800 dark:bg-dark-700 border border-light-500 dark:border-dark-500 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-50"
-          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDate(addDays(date, -1))}
+              disabled={loading || submitting}
+              className="h-10 w-10 rounded-xl border border-light-500 dark:border-dark-500 bg-light-800 dark:bg-dark-700 text-slate-700 dark:text-gray-200 flex items-center justify-center disabled:opacity-50"
+              title="Previous Date"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              disabled={loading || submitting}
+              max={today}
+              className="px-4 py-2.5 rounded-xl bg-light-800 dark:bg-dark-700 border border-light-500 dark:border-dark-500 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={() => setDate(addDays(date, 1))}
+              disabled={loading || submitting || date >= today}
+              className="h-10 w-10 rounded-xl border border-light-500 dark:border-dark-500 bg-light-800 dark:bg-dark-700 text-slate-700 dark:text-gray-200 flex items-center justify-center disabled:opacity-50"
+              title="Next Date"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
